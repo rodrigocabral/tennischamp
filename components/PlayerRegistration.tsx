@@ -35,7 +35,7 @@ export default function PlayerRegistration() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-col gap-4">
         <div className="flex items-center gap-2">
           <PlayerLimit />
           <span className="text-sm text-muted-foreground">
