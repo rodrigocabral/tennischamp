@@ -3,6 +3,7 @@ export interface Player {
   name: string;
   nickname: string;
   photoUrl: string;
+  points: number;
   gamesWon: number;
   gamesLost: number;
   matchesPlayed: string[];

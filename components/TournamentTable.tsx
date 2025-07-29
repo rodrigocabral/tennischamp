@@ -40,6 +40,7 @@ export default function TournamentTable() {
               <TableRow>
                 <TableHead className="w-12 text-center">#</TableHead>
                 <TableHead>Jogador</TableHead>
+                <TableHead className="text-right">Pts</TableHead>
                 <TableHead className="text-right">G+</TableHead>
                 <TableHead className="text-right">G-</TableHead>
                 <TableHead className="text-right">Saldo</TableHead>
@@ -64,6 +65,7 @@ export default function TournamentTable() {
                       </div>
                     </div>
                   </TableCell>
+                  <TableCell className="text-right font-bold text-green-600">{player.points}</TableCell>
                   <TableCell className="text-right">{player.gamesWon}</TableCell>
                   <TableCell className="text-right">{player.gamesLost}</TableCell>
                   <TableCell className="text-right font-medium">{player.gamesWon - player.gamesLost}</TableCell>

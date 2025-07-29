@@ -6,7 +6,7 @@ interface TournamentContextType {
   tournament: Tournament;
   playerLimit: number;
   setPlayerLimit: (limit: number) => void;
-  addPlayer: (player: Omit<Player, "id" | "gamesWon" | "gamesLost" | "matchesPlayed">) => void;
+  addPlayer: (player: Omit<Player, "id" | "points" | "gamesWon" | "gamesLost" | "matchesPlayed">) => void;
   updateMatch: (matchId: string, player1Games: number, player2Games: number) => void;
   resetTournament: () => void;
   startNextPhase: () => void;
@@ -31,7 +31,13 @@ export function TournamentProvider({ children }: { children: React.ReactNode }) 
     const savedPlayerLimit = localStorage.getItem('tennis-tournament-player-limit');
     
     if (savedTournament) {
-      setTournament(JSON.parse(savedTournament));
+      const tournament = JSON.parse(savedTournament);
+      // Migrate existing data to include points field if it doesn't exist
+      tournament.players = tournament.players.map((player: Player | Omit<Player, 'points'>) => ({
+        ...player,
+        points: 'points' in player ? player.points : 0
+      }));
+      setTournament(tournament);
     }
     if (savedPlayerLimit) {
       setPlayerLimit(JSON.parse(savedPlayerLimit));
@@ -48,7 +54,7 @@ export function TournamentProvider({ children }: { children: React.ReactNode }) 
     localStorage.setItem('tennis-tournament-player-limit', JSON.stringify(playerLimit));
   }, [playerLimit]);
 
-  const addPlayer = (playerData: Omit<Player, "id" | "gamesWon" | "gamesLost" | "matchesPlayed">) => {
+  const addPlayer = (playerData: Omit<Player, "id" | "points" | "gamesWon" | "gamesLost" | "matchesPlayed">) => {
     if (tournament.players.length >= playerLimit) {
       throw new Error(`Limite de ${playerLimit} jogadores atingido`);
     }
@@ -56,6 +62,7 @@ export function TournamentProvider({ children }: { children: React.ReactNode }) 
     const newPlayer: Player = {
       ...playerData,
       id: crypto.randomUUID(),
+      points: 0,
       gamesWon: 0,
       gamesLost: 0,
       matchesPlayed: []
