@@ -2,7 +2,6 @@ export interface Player {
   id: string;
   name: string;
   nickname: string;
-  photoUrl: string;
   points: number;
   gamesWon: number;
   gamesLost: number;
@@ -32,4 +31,4 @@ export interface Tournament {
   bracketMatches: BracketMatch[];
   numberOfCourts: number;
   matchesDrawn: boolean;
-} 
+}
