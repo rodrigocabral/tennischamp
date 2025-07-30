@@ -14,12 +14,14 @@ import {
   subscribeMatches,
   subscribePlayers,
   subscribeSettings,
+  subscribeTournament,
   updateMatch as updateMatchInFirestore,
   updateTournament,
   updateTournamentSettings,
   type FirestoreBracketMatch,
   type FirestoreMatch,
   type FirestorePlayer,
+  type FirestoreTournament,
   type TournamentSettings,
 } from '@/lib/firestore';
 import { generateInitialMatches, getPlayerRanking } from '@/lib/tournament';
@@ -257,6 +259,22 @@ export function TournamentProvider({
       }
     );
     unsubscribers.push(unsubscribeSettings);
+
+    // Listener para o torneio (fase, numberOfCourts, matchesDrawn)
+    const unsubscribeTournament = subscribeTournament(
+      tournamentId,
+      (tournamentData: FirestoreTournament | null) => {
+        if (tournamentData) {
+          setTournament(prev => ({
+            ...prev,
+            phase: tournamentData.phase,
+            numberOfCourts: tournamentData.numberOfCourts,
+            matchesDrawn: tournamentData.matchesDrawn,
+          }));
+        }
+      }
+    );
+    unsubscribers.push(unsubscribeTournament);
 
     // Cleanup
     return () => {
