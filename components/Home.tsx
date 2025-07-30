@@ -4,6 +4,7 @@ import CourtSettings from '@/components/CourtSettings';
 import MatchDraw from '@/components/MatchDraw';
 import PlayerRegistration from '@/components/PlayerRegistration';
 import ResetTournament from '@/components/ResetTournament';
+import ShareTournament from '@/components/ShareTournament';
 import TournamentBracket from '@/components/TournamentBracket';
 import { TournamentManager } from '@/components/TournamentManager';
 import TournamentTable from '@/components/TournamentTable';
@@ -26,7 +27,12 @@ export default function Home() {
           />
           <h1 className="text-2xl sm:text-4xl font-bold">Presença Open</h1>
         </div>
-        {tournamentId && <ResetTournament />}
+        {tournamentId && (
+          <div className="flex items-center gap-2">
+            <ShareTournament />
+            <ResetTournament />
+          </div>
+        )}
       </div>
 
       <div className="grid gap-4 sm:gap-8">
