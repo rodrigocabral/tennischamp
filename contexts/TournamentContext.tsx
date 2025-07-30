@@ -456,6 +456,7 @@ export function TournamentProvider({
   const canAdvancePhase = (() => {
     if (tournament.phase === 'GROUP') {
       return (
+        tournament.matchesDrawn &&
         tournament.matches.every(match => match.completed) &&
         tournament.players.length === playerLimit &&
         tournament.players.length >= 4

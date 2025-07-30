@@ -1,26 +1,46 @@
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { useTournament } from "@/contexts/TournamentContext";
-import { Shuffle, CheckCircle, AlertTriangle } from "lucide-react";
+import { Button } from '@/components/ui/button';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { useTournament } from '@/contexts/TournamentContext';
+import { AlertTriangle, CheckCircle, Loader2, Shuffle } from 'lucide-react';
+import { useState } from 'react';
 
 export default function MatchDraw() {
-  const { canDrawMatches, drawMatches, tournament, playerLimit, numberOfCourts } = useTournament();
-
+  const {
+    canDrawMatches,
+    drawMatches,
+    tournament,
+    playerLimit,
+    numberOfCourts,
+  } = useTournament();
+  const [isDrawing, setIsDrawing] = useState(false);
   // Função para validar se há conflitos no sorteio
   const validateSchedule = () => {
     const conflicts: string[] = [];
-    const timeSlotGroups: { [timeSlot: string]: typeof tournament.matches } = {};
-    const playerStats: { [playerId: string]: { name: string; matches: number; timeSlots: string[] } } = {};
-    
+    const timeSlotGroups: { [timeSlot: string]: typeof tournament.matches } =
+      {};
+    const playerStats: {
+      [playerId: string]: {
+        name: string;
+        matches: number;
+        timeSlots: string[];
+      };
+    } = {};
+
     // Inicializar estatísticas dos jogadores
     tournament.players.forEach(player => {
       playerStats[player.id] = {
         name: player.name,
         matches: 0,
-        timeSlots: []
+        timeSlots: [],
       };
     });
-    
+
     // Agrupar partidas por horário e calcular estatísticas dos jogadores
     tournament.matches.forEach(match => {
       const timeSlot = match.timeSlot || 'Sem horário';
@@ -47,15 +67,19 @@ export default function MatchDraw() {
     // Verificar conflitos em cada horário
     Object.entries(timeSlotGroups).forEach(([timeSlot, matches]) => {
       const playersInSlot = new Set<string>();
-      
+
       matches.forEach(match => {
         if (playersInSlot.has(match.player1Id)) {
-          conflicts.push(`Jogador ${match.player1Id} tem conflito no horário ${timeSlot}`);
+          conflicts.push(
+            `Jogador ${match.player1Id} tem conflito no horário ${timeSlot}`
+          );
         }
         if (playersInSlot.has(match.player2Id)) {
-          conflicts.push(`Jogador ${match.player2Id} tem conflito no horário ${timeSlot}`);
+          conflicts.push(
+            `Jogador ${match.player2Id} tem conflito no horário ${timeSlot}`
+          );
         }
-        
+
         playersInSlot.add(match.player1Id);
         playersInSlot.add(match.player2Id);
       });
@@ -66,13 +90,13 @@ export default function MatchDraw() {
       conflicts,
       totalTimeSlots: Object.keys(timeSlotGroups).length,
       timeSlotGroups,
-      playerStats
+      playerStats,
     };
   };
 
   if (tournament.matchesDrawn) {
     const validation = validateSchedule();
-    
+
     return (
       <Card>
         <CardHeader>
@@ -110,11 +134,13 @@ export default function MatchDraw() {
           </div>
 
           {/* Validação de Conflitos */}
-          <div className={`p-3 rounded flex items-start gap-2 ${
-            validation.hasConflicts 
-              ? 'bg-red-50 text-red-700' 
-              : 'bg-green-50 text-green-700'
-          }`}>
+          <div
+            className={`p-3 rounded flex items-start gap-2 ${
+              validation.hasConflicts
+                ? 'bg-red-50 text-red-700'
+                : 'bg-green-50 text-green-700'
+            }`}
+          >
             {validation.hasConflicts ? (
               <AlertTriangle className="h-4 w-4 mt-0.5 text-red-500" />
             ) : (
@@ -122,16 +148,14 @@ export default function MatchDraw() {
             )}
             <div className="text-xs">
               <p className="font-medium">
-                {validation.hasConflicts 
-                  ? '⚠️ Conflitos Detectados' 
-                  : '✅ Nenhum Conflito Detectado'
-                }
+                {validation.hasConflicts
+                  ? '⚠️ Conflitos Detectados'
+                  : '✅ Nenhum Conflito Detectado'}
               </p>
               <p>
-                {validation.hasConflicts 
-                  ? 'Alguns jogadores estão em partidas simultâneas' 
-                  : 'Todos os jogadores têm apenas uma partida por horário'
-                }
+                {validation.hasConflicts
+                  ? 'Alguns jogadores estão em partidas simultâneas'
+                  : 'Todos os jogadores têm apenas uma partida por horário'}
               </p>
             </div>
           </div>
@@ -143,11 +167,20 @@ export default function MatchDraw() {
               {Object.entries(validation.timeSlotGroups)
                 .sort(([a], [b]) => a.localeCompare(b))
                 .map(([timeSlot, matches]) => (
-                  <div key={timeSlot} className="flex justify-between items-center text-xs bg-gray-50 px-2 py-1 rounded">
+                  <div
+                    key={timeSlot}
+                    className="flex justify-between items-center text-xs bg-gray-50 px-2 py-1 rounded"
+                  >
                     <span className="font-mono">{timeSlot}</span>
                     <span className="text-gray-600">
-                      {matches.length} partida{matches.length !== 1 ? 's' : ''} 
-                      em {Math.max(...matches.map(m => m.courtNumber || 1))} quadra{Math.max(...matches.map(m => m.courtNumber || 1)) !== 1 ? 's' : ''}
+                      {matches.length} partida{matches.length !== 1 ? 's' : ''}
+                      em {Math.max(
+                        ...matches.map(m => m.courtNumber || 1)
+                      )}{' '}
+                      quadra
+                      {Math.max(...matches.map(m => m.courtNumber || 1)) !== 1
+                        ? 's'
+                        : ''}
                     </span>
                   </div>
                 ))}
@@ -162,20 +195,30 @@ export default function MatchDraw() {
             <div className="space-y-1 max-h-40 overflow-y-auto">
               {Object.values(validation.playerStats)
                 .sort((a, b) => a.matches - b.matches) // Ordenar por número de partidas (menor primeiro)
-                .map((player) => {
+                .map(player => {
                   const totalPlayers = tournament.players.length;
                   const expectedMatches = totalPlayers - 1; // Cada jogador deve jogar contra todos os outros
-                  const percentage = Math.round((player.matches / expectedMatches) * 100);
-                  
+                  const percentage = Math.round(
+                    (player.matches / expectedMatches) * 100
+                  );
+
                   return (
-                    <div key={player.name} className="flex justify-between items-center text-xs bg-gray-50 px-2 py-1 rounded">
+                    <div
+                      key={player.name}
+                      className="flex justify-between items-center text-xs bg-gray-50 px-2 py-1 rounded"
+                    >
                       <div className="flex items-center gap-2">
                         <span className="font-medium">{player.name}</span>
-                        <div className={`w-2 h-2 rounded-full ${
-                          player.matches <= expectedMatches * 0.6 ? 'bg-green-500' : // Poucos jogos = verde
-                          player.matches <= expectedMatches * 0.8 ? 'bg-yellow-500' : // Médios = amarelo  
-                          'bg-blue-500' // Muitos = azul
-                        }`} title={`${percentage}% das partidas agendadas`} />
+                        <div
+                          className={`w-2 h-2 rounded-full ${
+                            player.matches <= expectedMatches * 0.6
+                              ? 'bg-green-500' // Poucos jogos = verde
+                              : player.matches <= expectedMatches * 0.8
+                                ? 'bg-yellow-500' // Médios = amarelo
+                                : 'bg-blue-500' // Muitos = azul
+                          }`}
+                          title={`${percentage}% das partidas agendadas`}
+                        />
                       </div>
                       <div className="flex items-center gap-2">
                         <span className="text-gray-600">
@@ -226,18 +269,25 @@ export default function MatchDraw() {
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
           <div className="space-y-1">
             <p className="font-medium">Jogadores</p>
-            <p className="text-muted-foreground">{tournament.players.length} / {playerLimit}</p>
+            <p className="text-muted-foreground">
+              {tournament.players.length} / {playerLimit}
+            </p>
           </div>
           <div className="space-y-1">
             <p className="font-medium">Quadras</p>
-            <p className="text-muted-foreground">{numberOfCourts} disponíveis</p>
+            <p className="text-muted-foreground">
+              {numberOfCourts} disponíveis
+            </p>
           </div>
           <div className="space-y-1">
             <p className="font-medium">Total de Partidas</p>
             <p className="text-muted-foreground">
-              {tournament.players.length >= 2 
-                ? (tournament.players.length * (tournament.players.length - 1)) / 2 
-                : 0} partidas
+              {tournament.players.length >= 2
+                ? (tournament.players.length *
+                    (tournament.players.length - 1)) /
+                  2
+                : 0}{' '}
+              partidas
             </p>
           </div>
         </div>
@@ -250,22 +300,31 @@ export default function MatchDraw() {
                 <li>Cadastre pelo menos 4 jogadores</li>
               )}
               {tournament.players.length !== playerLimit && (
-                <li>Complete o cadastro de todos os jogadores ({playerLimit} jogadores)</li>
+                <li>
+                  Complete o cadastro de todos os jogadores ({playerLimit}{' '}
+                  jogadores)
+                </li>
               )}
-              {numberOfCourts <= 0 && (
-                <li>Configure pelo menos 1 quadra</li>
-              )}
+              {numberOfCourts <= 0 && <li>Configure pelo menos 1 quadra</li>}
             </ul>
           </div>
         )}
 
-        <Button 
-          onClick={drawMatches} 
-          disabled={!canDrawMatches}
+        <Button
+          onClick={async () => {
+            setIsDrawing(true);
+            await drawMatches();
+            setIsDrawing(false);
+          }}
+          disabled={!canDrawMatches || isDrawing}
           className="w-full"
           size="lg"
         >
-          <Shuffle className="h-4 w-4 mr-2" />
+          {isDrawing ? (
+            <Loader2 className="h-4 w-4 mr-2" />
+          ) : (
+            <Shuffle className="h-4 w-4 mr-2" />
+          )}
           Sortear Partidas
         </Button>
 
@@ -280,4 +339,4 @@ export default function MatchDraw() {
       </CardContent>
     </Card>
   );
-} 
+}
