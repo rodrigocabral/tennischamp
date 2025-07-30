@@ -651,7 +651,11 @@ export function TournamentProvider({
 
     try {
       setError(null);
-      const matches = generateInitialMatches(tournament.players);
+      // Shuffle players to ensure randomness in match generation
+      const shuffledPlayers = [...tournament.players].sort(
+        () => Math.random() - 0.5
+      );
+      const matches = generateInitialMatches(shuffledPlayers);
       const matchesWithSchedule = assignMatchesToCourts(
         matches,
         numberOfCourts
