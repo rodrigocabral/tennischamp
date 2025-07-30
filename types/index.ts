@@ -3,6 +3,7 @@ export interface Player {
   name: string;
   nickname: string;
   photoUrl: string;
+  points: number;
   gamesWon: number;
   gamesLost: number;
   matchesPlayed: string[];
@@ -16,15 +17,19 @@ export interface Match {
   player2Games: number;
   completed: boolean;
   date: string;
+  courtNumber?: number;
+  timeSlot?: string;
 }
 
 export interface BracketMatch extends Match {
-  round: 'SEMIFINALS' | 'FINAL';
+  round: 'SEMIFINALS' | 'FINAL' | 'THIRD_PLACE';
 }
 
 export interface Tournament {
   players: Player[];
   matches: Match[];
-  phase: 'GROUP' | 'SEMIFINALS' | 'FINAL';
+  phase: 'GROUP' | 'FINAL';
   bracketMatches: BracketMatch[];
+  numberOfCourts: number;
+  matchesDrawn: boolean;
 } 

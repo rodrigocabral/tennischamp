@@ -40,6 +40,7 @@ export default function TournamentTable() {
               <TableRow>
                 <TableHead className="w-12 text-center">#</TableHead>
                 <TableHead>Jogador</TableHead>
+                <TableHead className="text-right">Pts</TableHead>
                 <TableHead className="text-right">G+</TableHead>
                 <TableHead className="text-right">G-</TableHead>
                 <TableHead className="text-right">Saldo</TableHead>
@@ -64,6 +65,7 @@ export default function TournamentTable() {
                       </div>
                     </div>
                   </TableCell>
+                  <TableCell className="text-right font-bold text-green-600">{player.points}</TableCell>
                   <TableCell className="text-right">{player.gamesWon}</TableCell>
                   <TableCell className="text-right">{player.gamesLost}</TableCell>
                   <TableCell className="text-right font-medium">{player.gamesWon - player.gamesLost}</TableCell>
@@ -80,72 +82,169 @@ export default function TournamentTable() {
             <h3 className="text-base sm:text-lg font-medium">Partidas da Fase de Grupos</h3>
             {canAdvancePhase && (
               <Button onClick={startNextPhase}>
-                Iniciar Semi Finais
+                Iniciar Finais
               </Button>
             )}
           </div>
           <div className="grid gap-3">
-            {tournament.matches.map((match) => (
-              <div key={match.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 sm:p-4 border rounded-lg gap-3 sm:gap-4">
-                <div className="flex items-center gap-3 sm:gap-4 text-sm sm:text-base">
-                  <span className="font-medium line-clamp-1">{getPlayerName(match.player1Id)}</span>
-                  {match.completed ? (
-                    <span className="font-mono whitespace-nowrap">
-                      {match.player1Games} - {match.player2Games}
-                    </span>
-                  ) : (
-                    <span className="text-muted-foreground">vs</span>
-                  )}
-                  <span className="font-medium line-clamp-1">{getPlayerName(match.player2Id)}</span>
-                </div>
-                
-                {!match.completed && (
-                  <Dialog open={selectedMatch === match.id} onOpenChange={(open) => {
-                    if (!open) setSelectedMatch(null);
-                    else setSelectedMatch(match.id);
-                  }}>
-                    <DialogTrigger asChild>
-                      <Button variant="outline" size="sm" className="w-full sm:w-auto">
-                        Lançar Resultado
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent className="sm:max-w-[425px]">
-                      <DialogHeader>
-                        <DialogTitle>Lançar Resultado da Partida</DialogTitle>
-                      </DialogHeader>
-                      <form onSubmit={handleScoreSubmit} className="space-y-4">
-                        <div className="flex items-center gap-4">
-                          <div className="flex-1 space-y-1">
-                            <label className="text-sm line-clamp-1">{getPlayerName(match.player1Id)}</label>
-                            <Input
-                              type="number"
-                              min="0"
-                              value={scores.player1}
-                              onChange={(e) => setScores(prev => ({ ...prev, player1: parseInt(e.target.value) || 0 }))}
-                              required
-                            />
-                          </div>
-                          <span className="text-2xl">-</span>
-                          <div className="flex-1 space-y-1">
-                            <label className="text-sm line-clamp-1">{getPlayerName(match.player2Id)}</label>
-                            <Input
-                              type="number"
-                              min="0"
-                              value={scores.player2}
-                              onChange={(e) => setScores(prev => ({ ...prev, player2: parseInt(e.target.value) || 0 }))}
-                              required
-                            />
-                          </div>
-                        </div>
-                        <Button type="submit" className="w-full">
-                          Salvar Resultado
+            {tournament.matchesDrawn ? (
+              // Exibir partidas organizadas por horário e quadra
+              (() => {
+                const matchesByTimeSlot = tournament.matches.reduce((acc, match) => {
+                  const timeSlot = match.timeSlot || 'Sem horário';
+                  if (!acc[timeSlot]) acc[timeSlot] = [];
+                  acc[timeSlot].push(match);
+                  return acc;
+                }, {} as Record<string, typeof tournament.matches>);
+
+                return Object.entries(matchesByTimeSlot)
+                  .sort(([a], [b]) => a.localeCompare(b))
+                  .map(([timeSlot, matches]) => (
+                    <div key={timeSlot} className="space-y-2">
+                      <h4 className="font-medium text-sm text-muted-foreground bg-muted px-3 py-1 rounded">
+                        {timeSlot}
+                      </h4>
+                      <div className="grid gap-2">
+                        {matches
+                          .sort((a, b) => (a.courtNumber || 0) - (b.courtNumber || 0))
+                          .map((match) => (
+                            <div key={match.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 sm:p-4 border rounded-lg gap-3 sm:gap-4">
+                              <div className="flex items-center gap-3 sm:gap-4 text-sm sm:text-base">
+                                <div className="flex items-center gap-2">
+                                  <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded font-mono">
+                                    Quadra {match.courtNumber}
+                                  </span>
+                                  <span className="font-medium line-clamp-1">{getPlayerName(match.player1Id)}</span>
+                                </div>
+                                {match.completed ? (
+                                  <span className="font-mono whitespace-nowrap">
+                                    {match.player1Games} - {match.player2Games}
+                                  </span>
+                                ) : (
+                                  <span className="text-muted-foreground">vs</span>
+                                )}
+                                <span className="font-medium line-clamp-1">{getPlayerName(match.player2Id)}</span>
+                              </div>
+                              
+                              {!match.completed && (
+                                <Dialog open={selectedMatch === match.id} onOpenChange={(open) => {
+                                  if (!open) setSelectedMatch(null);
+                                  else setSelectedMatch(match.id);
+                                }}>
+                                  <DialogTrigger asChild>
+                                    <Button variant="outline" size="sm" className="w-full sm:w-auto">
+                                      Lançar Resultado
+                                    </Button>
+                                  </DialogTrigger>
+                                  <DialogContent className="sm:max-w-[425px]">
+                                    <DialogHeader>
+                                      <DialogTitle>Lançar Resultado da Partida</DialogTitle>
+                                    </DialogHeader>
+                                    <form onSubmit={handleScoreSubmit} className="space-y-4">
+                                      <div className="flex items-center gap-4">
+                                        <div className="flex-1 space-y-1">
+                                          <label className="text-xs sm:text-sm line-clamp-1">{getPlayerName(match.player1Id)}</label>
+                                          <Input
+                                            type="number"
+                                            min="0"
+                                            value={scores.player1}
+                                            onChange={(e) => setScores(prev => ({ ...prev, player1: parseInt(e.target.value) || 0 }))}
+                                            required
+                                            className="text-sm"
+                                          />
+                                        </div>
+                                        <span className="text-xl sm:text-2xl">-</span>
+                                        <div className="flex-1 space-y-1">
+                                          <label className="text-xs sm:text-sm line-clamp-1">{getPlayerName(match.player2Id)}</label>
+                                          <Input
+                                            type="number"
+                                            min="0"
+                                            value={scores.player2}
+                                            onChange={(e) => setScores(prev => ({ ...prev, player2: parseInt(e.target.value) || 0 }))}
+                                            required
+                                            className="text-sm"
+                                          />
+                                        </div>
+                                      </div>
+                                      <Button type="submit" className="w-full">
+                                        Salvar Resultado
+                                      </Button>
+                                    </form>
+                                  </DialogContent>
+                                </Dialog>
+                              )}
+                            </div>
+                          ))}
+                      </div>
+                    </div>
+                  ));
+              })()
+            ) : (
+              // Exibir partidas na forma original quando não sorteadas
+              tournament.matches.map((match) => (
+                <div key={match.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 sm:p-4 border rounded-lg gap-3 sm:gap-4">
+                  <div className="flex items-center gap-3 sm:gap-4 text-sm sm:text-base">
+                    <span className="font-medium line-clamp-1">{getPlayerName(match.player1Id)}</span>
+                    {match.completed ? (
+                      <span className="font-mono whitespace-nowrap">
+                        {match.player1Games} - {match.player2Games}
+                      </span>
+                    ) : (
+                      <span className="text-muted-foreground">vs</span>
+                    )}
+                    <span className="font-medium line-clamp-1">{getPlayerName(match.player2Id)}</span>
+                  </div>
+                  
+                  {!match.completed && (
+                    <Dialog open={selectedMatch === match.id} onOpenChange={(open) => {
+                      if (!open) setSelectedMatch(null);
+                      else setSelectedMatch(match.id);
+                    }}>
+                      <DialogTrigger asChild>
+                        <Button variant="outline" size="sm" className="w-full sm:w-auto">
+                          Lançar Resultado
                         </Button>
-                      </form>
-                    </DialogContent>
-                  </Dialog>
-                )}
-              </div>
-            ))}
+                      </DialogTrigger>
+                      <DialogContent className="sm:max-w-[425px]">
+                        <DialogHeader>
+                          <DialogTitle>Lançar Resultado da Partida</DialogTitle>
+                        </DialogHeader>
+                        <form onSubmit={handleScoreSubmit} className="space-y-4">
+                          <div className="flex items-center gap-4">
+                            <div className="flex-1 space-y-1">
+                              <label className="text-xs sm:text-sm line-clamp-1">{getPlayerName(match.player1Id)}</label>
+                              <Input
+                                type="number"
+                                min="0"
+                                value={scores.player1}
+                                onChange={(e) => setScores(prev => ({ ...prev, player1: parseInt(e.target.value) || 0 }))}
+                                required
+                                className="text-sm"
+                              />
+                            </div>
+                            <span className="text-xl sm:text-2xl">-</span>
+                            <div className="flex-1 space-y-1">
+                              <label className="text-xs sm:text-sm line-clamp-1">{getPlayerName(match.player2Id)}</label>
+                              <Input
+                                type="number"
+                                min="0"
+                                value={scores.player2}
+                                onChange={(e) => setScores(prev => ({ ...prev, player2: parseInt(e.target.value) || 0 }))}
+                                required
+                                className="text-sm"
+                              />
+                            </div>
+                          </div>
+                          <Button type="submit" className="w-full">
+                            Salvar Resultado
+                          </Button>
+                        </form>
+                      </DialogContent>
+                    </Dialog>
+                  )}
+                </div>
+              ))
+            )}
           </div>
         </div>
       )}
