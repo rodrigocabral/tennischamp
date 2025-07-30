@@ -105,7 +105,7 @@ export default function TournamentTable() {
         </div>
       </ScrollArea>
 
-      {tournament.phase === 'GROUP' && tournament.matchesDrawn && (
+      {tournament.matchesDrawn && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="text-base sm:text-lg font-medium">
