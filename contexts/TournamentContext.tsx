@@ -105,30 +105,16 @@ export function TournamentProvider({ children }: { children: React.ReactNode }) 
   };
 
   const generateBracketMatches = (topPlayers: Player[]) => {
-    const numSemiFinals = Math.floor(playerLimit * 0.8); // 80% dos jogadores vão para as semifinais
-    
-    // Generate semifinals matches
-    const semiFinals = [];
-    for (let i = 0; i < numSemiFinals; i += 2) {
-      if (i + 1 < numSemiFinals) {
-        semiFinals.push({
-          id: `semi${(i/2)+1}`,
-          player1Id: topPlayers[i].id,
-          player2Id: topPlayers[i + 1].id,
-          player1Games: 0,
-          player2Games: 0,
-          completed: false,
-          date: new Date().toISOString(),
-          round: 'SEMIFINALS' as const
-        });
-      }
+    // Precisamos de pelo menos 4 jogadores para ter final e disputa do terceiro lugar
+    if (topPlayers.length < 4) {
+      return [];
     }
-
-    // Generate final match (players will be determined after semifinals)
+    
+    // Final: 1º vs 2º lugar
     const final = {
       id: 'final',
-      player1Id: '',
-      player2Id: '',
+      player1Id: topPlayers[0].id, // 1º lugar
+      player2Id: topPlayers[1].id, // 2º lugar
       player1Games: 0,
       player2Games: 0,
       completed: false,
@@ -136,33 +122,29 @@ export function TournamentProvider({ children }: { children: React.ReactNode }) 
       round: 'FINAL' as const
     };
 
-    return [...semiFinals, final];
+    // Disputa do terceiro lugar: 3º vs 4º lugar
+    const thirdPlace = {
+      id: 'third-place',
+      player1Id: topPlayers[2].id, // 3º lugar
+      player2Id: topPlayers[3].id, // 4º lugar
+      player1Games: 0,
+      player2Games: 0,
+      completed: false,
+      date: new Date().toISOString(),
+      round: 'THIRD_PLACE' as const
+    };
+
+    return [thirdPlace, final];
   };
 
   const startNextPhase = () => {
     if (tournament.phase === 'GROUP') {
-      const numSemiFinals = Math.floor(playerLimit * 0.8);
-      const topPlayers = getPlayerRanking(tournament).slice(0, numSemiFinals);
-      setTournament(prev => ({
-        ...prev,
-        phase: 'SEMIFINALS',
-        bracketMatches: generateBracketMatches(topPlayers)
-      }));
-    } else if (tournament.phase === 'SEMIFINALS') {
-      // Find winners of semifinals
-      const semiFinals = tournament.bracketMatches.filter(m => m.round === 'SEMIFINALS');
-      const winners = semiFinals.map(match => {
-        return match.player1Games > match.player2Games ? match.player1Id : match.player2Id;
-      });
-
+      // Pegamos os 4 melhores jogadores para criar a final e disputa do terceiro lugar
+      const topPlayers = getPlayerRanking(tournament).slice(0, 4);
       setTournament(prev => ({
         ...prev,
         phase: 'FINAL',
-        bracketMatches: prev.bracketMatches.map(match =>
-          match.id === 'final'
-            ? { ...match, player1Id: winners[0], player2Id: winners[1] }
-            : match
-        )
+        bracketMatches: generateBracketMatches(topPlayers)
       }));
     }
   };
@@ -170,11 +152,8 @@ export function TournamentProvider({ children }: { children: React.ReactNode }) 
   const canAdvancePhase = (() => {
     if (tournament.phase === 'GROUP') {
       return tournament.matches.every(match => match.completed) && 
-             tournament.players.length === playerLimit;
-    } else if (tournament.phase === 'SEMIFINALS') {
-      return tournament.bracketMatches
-        .filter(match => match.round === 'SEMIFINALS')
-        .every(match => match.completed);
+             tournament.players.length === playerLimit &&
+             tournament.players.length >= 4; // Precisamos de pelo menos 4 jogadores
     }
     return false;
   })();

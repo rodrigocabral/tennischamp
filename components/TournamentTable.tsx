@@ -82,7 +82,7 @@ export default function TournamentTable() {
             <h3 className="text-base sm:text-lg font-medium">Partidas da Fase de Grupos</h3>
             {canAdvancePhase && (
               <Button onClick={startNextPhase}>
-                Iniciar Semi Finais
+                Iniciar Finais
               </Button>
             )}
           </div>

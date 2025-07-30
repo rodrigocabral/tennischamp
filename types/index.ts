@@ -20,12 +20,12 @@ export interface Match {
 }
 
 export interface BracketMatch extends Match {
-  round: 'SEMIFINALS' | 'FINAL';
+  round: 'SEMIFINALS' | 'FINAL' | 'THIRD_PLACE';
 }
 
 export interface Tournament {
   players: Player[];
   matches: Match[];
-  phase: 'GROUP' | 'SEMIFINALS' | 'FINAL';
+  phase: 'GROUP' | 'FINAL';
   bracketMatches: BracketMatch[];
 } 

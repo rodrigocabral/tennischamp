@@ -16,7 +16,7 @@ import { useState } from "react";
 import { Trophy } from "lucide-react";
 
 export default function TournamentBracket() {
-  const { tournament, updateMatch, startNextPhase, canAdvancePhase } = useTournament();
+  const { tournament, updateMatch } = useTournament();
   const [selectedMatch, setSelectedMatch] = useState<string | null>(null);
   const [scores, setScores] = useState({ player1: 0, player2: 0 });
 
@@ -140,28 +140,27 @@ export default function TournamentBracket() {
 
   if (tournament.phase === 'GROUP') return null;
 
-  const semiFinals = tournament.bracketMatches.filter(m => m.round === 'SEMIFINALS');
   const final = tournament.bracketMatches.find(m => m.round === 'FINAL');
+  const thirdPlace = tournament.bracketMatches.find(m => m.round === 'THIRD_PLACE');
+
   const winner = getTournamentWinner();
 
   return (
     <div className="space-y-8">
-      <div>
-        <h3 className="text-base sm:text-lg font-medium mb-4 sm:mb-6">Semi Finais</h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-8 md:gap-24 place-items-center">
-          {semiFinals.map(match => (
-            <div key={match.id} className="w-full flex justify-center">
-              {renderMatchCard(match)}
-            </div>
-          ))}
+      {thirdPlace && (
+        <div>
+          <h3 className="text-base sm:text-lg font-medium mb-4 sm:mb-6">Disputa do Terceiro Lugar</h3>
+          <div className="flex justify-center">
+            {renderMatchCard(thirdPlace)}
+          </div>
         </div>
-      </div>
+      )}
 
-      {(tournament.phase === 'FINAL' || final) && (
+      {final && (
         <div>
           <h3 className="text-base sm:text-lg font-medium mb-4 sm:mb-6">Final</h3>
           <div className="flex justify-center">
-            {final && renderMatchCard(final)}
+            {renderMatchCard(final)}
           </div>
           {winner && (
             <div className="mt-6 sm:mt-8 flex flex-col items-center gap-3 sm:gap-4 p-4 sm:p-6 bg-green-50 rounded-lg mx-4 sm:mx-0">
@@ -172,14 +171,6 @@ export default function TournamentBracket() {
               </div>
             </div>
           )}
-        </div>
-      )}
-
-      {canAdvancePhase && (
-        <div className="flex justify-center px-4 sm:px-0">
-          <Button onClick={startNextPhase} size="lg" className="w-full sm:w-auto">
-            {tournament.phase === 'SEMIFINALS' ? 'Iniciar Final' : 'Finalizar Torneio'}
-          </Button>
         </div>
       )}
     </div>
