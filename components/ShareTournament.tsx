@@ -2,8 +2,9 @@
 
 import { Button } from '@/components/ui/button';
 import { useTournament } from '@/contexts/TournamentContext';
-import { CheckIcon, Copy } from 'lucide-react';
+import { CheckIcon, Share } from 'lucide-react';
 import { useState } from 'react';
+import { toast } from 'sonner';
 
 export default function ShareTournament() {
   const { tournamentId } = useTournament();
@@ -20,6 +21,7 @@ export default function ShareTournament() {
     try {
       await navigator.clipboard.writeText(shareUrl);
       setCopied(true);
+      toast.success('Link copiado!');
       setTimeout(() => setCopied(false), 2000);
     } catch (error) {
       console.error('Failed to copy URL:', error);
@@ -35,27 +37,15 @@ export default function ShareTournament() {
     }
   };
 
-  const copiedText = (
-    <>
-      <CheckIcon className="h-4 w-4 mr-2" />
-      Copiado!
-    </>
-  );
-  const shareText = (
-    <>
-      <Copy className="h-4 w-4 mr-2" />
-      Compartilhar
-    </>
-  );
-
   return (
     <Button
       onClick={handleShare}
-      variant="outline"
-      size="sm"
+      variant="secondary"
+      size="icon"
       className="text-sm"
+      title="Compartilhar"
     >
-      {copied ? copiedText : shareText}
+      {copied ? <CheckIcon /> : <Share />}
     </Button>
   );
 }
