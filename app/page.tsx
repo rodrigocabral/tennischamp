@@ -5,6 +5,8 @@ import TournamentTable from "@/components/TournamentTable";
 import TournamentBracket from "@/components/TournamentBracket";
 import PlayerRegistration from "@/components/PlayerRegistration";
 import ResetTournament from "@/components/ResetTournament";
+import CourtSettings from "@/components/CourtSettings";
+import MatchDraw from "@/components/MatchDraw";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function Home() {
@@ -27,6 +29,10 @@ export default function Home() {
               <PlayerRegistration />
             </CardContent>
           </Card>
+
+          <CourtSettings />
+
+          <MatchDraw />
 
           <Card>
             <CardHeader className="p-4 sm:p-6">

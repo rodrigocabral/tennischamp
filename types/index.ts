@@ -17,6 +17,8 @@ export interface Match {
   player2Games: number;
   completed: boolean;
   date: string;
+  courtNumber?: number;
+  timeSlot?: string;
 }
 
 export interface BracketMatch extends Match {
@@ -28,4 +30,6 @@ export interface Tournament {
   matches: Match[];
   phase: 'GROUP' | 'FINAL';
   bracketMatches: BracketMatch[];
+  numberOfCourts: number;
+  matchesDrawn: boolean;
 } 
