@@ -29,7 +29,6 @@ Armazena todos os jogadores, organizados por torneio:
   tournamentId: string;
   name: string;
   nickname: string;
-  photoUrl: string;
   points: number;
   gamesWon: number;
   gamesLost: number;
