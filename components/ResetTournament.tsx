@@ -42,7 +42,7 @@ export default function ResetTournament() {
             Tem certeza que deseja limpar todos os dados do torneio? Esta ação não pode ser desfeita.
           </DialogDescription>
         </DialogHeader>
-        <DialogFooter className="flex gap-2 sm:gap-0">
+        <DialogFooter className="flex gap-2">
           <Button
             variant="outline"
             onClick={() => setOpen(false)}

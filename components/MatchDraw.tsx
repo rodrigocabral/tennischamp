@@ -10,14 +10,38 @@ export default function MatchDraw() {
   const validateSchedule = () => {
     const conflicts: string[] = [];
     const timeSlotGroups: { [timeSlot: string]: typeof tournament.matches } = {};
+    const playerStats: { [playerId: string]: { name: string; matches: number; timeSlots: string[] } } = {};
     
-    // Agrupar partidas por horário
+    // Inicializar estatísticas dos jogadores
+    tournament.players.forEach(player => {
+      playerStats[player.id] = {
+        name: player.name,
+        matches: 0,
+        timeSlots: []
+      };
+    });
+    
+    // Agrupar partidas por horário e calcular estatísticas dos jogadores
     tournament.matches.forEach(match => {
       const timeSlot = match.timeSlot || 'Sem horário';
       if (!timeSlotGroups[timeSlot]) {
         timeSlotGroups[timeSlot] = [];
       }
       timeSlotGroups[timeSlot].push(match);
+
+      // Atualizar estatísticas dos jogadores
+      if (playerStats[match.player1Id]) {
+        playerStats[match.player1Id].matches++;
+        if (!playerStats[match.player1Id].timeSlots.includes(timeSlot)) {
+          playerStats[match.player1Id].timeSlots.push(timeSlot);
+        }
+      }
+      if (playerStats[match.player2Id]) {
+        playerStats[match.player2Id].matches++;
+        if (!playerStats[match.player2Id].timeSlots.includes(timeSlot)) {
+          playerStats[match.player2Id].timeSlots.push(timeSlot);
+        }
+      }
     });
 
     // Verificar conflitos em cada horário
@@ -41,7 +65,8 @@ export default function MatchDraw() {
       hasConflicts: conflicts.length > 0,
       conflicts,
       totalTimeSlots: Object.keys(timeSlotGroups).length,
-      timeSlotGroups
+      timeSlotGroups,
+      playerStats
     };
   };
 
@@ -128,6 +153,59 @@ export default function MatchDraw() {
                 ))}
             </div>
           </div>
+
+          {/* Estatísticas por Jogador */}
+          <div className="space-y-2">
+            <h4 className="font-medium text-sm flex items-center gap-2">
+              🎯 Distribuição por Jogador (Otimizada):
+            </h4>
+            <div className="space-y-1 max-h-40 overflow-y-auto">
+              {Object.values(validation.playerStats)
+                .sort((a, b) => a.matches - b.matches) // Ordenar por número de partidas (menor primeiro)
+                .map((player) => {
+                  const totalPlayers = tournament.players.length;
+                  const expectedMatches = totalPlayers - 1; // Cada jogador deve jogar contra todos os outros
+                  const percentage = Math.round((player.matches / expectedMatches) * 100);
+                  
+                  return (
+                    <div key={player.name} className="flex justify-between items-center text-xs bg-gray-50 px-2 py-1 rounded">
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium">{player.name}</span>
+                        <div className={`w-2 h-2 rounded-full ${
+                          player.matches <= expectedMatches * 0.6 ? 'bg-green-500' : // Poucos jogos = verde
+                          player.matches <= expectedMatches * 0.8 ? 'bg-yellow-500' : // Médios = amarelo  
+                          'bg-blue-500' // Muitos = azul
+                        }`} title={`${percentage}% das partidas agendadas`} />
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-gray-600">
+                          {player.matches}/{expectedMatches} partidas
+                        </span>
+                        <span className="text-xs text-gray-500">
+                          ({player.timeSlots.length} horários)
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+            </div>
+            <div className="text-xs text-blue-600 bg-blue-50 p-2 rounded">
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-1">
+                  <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                  <span>Início (priorizados)</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <div className="w-2 h-2 rounded-full bg-yellow-500"></div>
+                  <span>Meio</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <div className="w-2 h-2 rounded-full bg-blue-500"></div>
+                  <span>Mais jogos</span>
+                </div>
+              </div>
+            </div>
+          </div>
         </CardContent>
       </Card>
     );
@@ -192,8 +270,12 @@ export default function MatchDraw() {
         </Button>
 
         <div className="text-xs text-blue-600 bg-blue-50 p-3 rounded">
-          <p className="font-medium">🎯 Nova Funcionalidade:</p>
-          <p>O sistema agora garante que nenhum jogador tenha partidas simultâneas!</p>
+          <p className="font-medium">🎯 Otimizações Ativas:</p>
+          <ul className="list-disc list-inside space-y-1 mt-1">
+            <li>Nenhum jogador em partidas simultâneas</li>
+            <li>Prioridade para jogadores com menos partidas agendadas</li>
+            <li>Distribuição equilibrada ao longo dos horários</li>
+          </ul>
         </div>
       </CardContent>
     </Card>
