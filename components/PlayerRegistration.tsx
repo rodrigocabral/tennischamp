@@ -12,7 +12,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useTournament } from '@/contexts/TournamentContext';
 import { useState } from 'react';
-import PlayerLimit from './PlayerLimit';
 
 export default function PlayerRegistration() {
   const { tournament, addPlayer, playerLimit } = useTournament();
@@ -32,10 +31,9 @@ export default function PlayerRegistration() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between flex-col gap-4">
-        <div className="flex items-center gap-2">
-          <PlayerLimit />
+        <div className="text-center">
           <span className="text-sm text-muted-foreground">
-            {tournament.players.length} de {playerLimit} jogadores
+            {tournament.players.length} de {playerLimit} jogadores cadastrados
           </span>
         </div>
         <Dialog open={open} onOpenChange={setOpen}>

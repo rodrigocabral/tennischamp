@@ -40,7 +40,7 @@ export default function ShareTournament() {
   return (
     <Button
       onClick={handleShare}
-      variant="secondary"
+      variant="outline"
       size="icon"
       className="text-sm"
       title="Compartilhar"

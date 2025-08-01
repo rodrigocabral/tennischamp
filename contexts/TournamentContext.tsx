@@ -42,6 +42,8 @@ interface TournamentContextType {
   setPlayerLimit: (limit: number) => void;
   numberOfCourts: number;
   setNumberOfCourts: (courts: number) => void;
+  timeSlots: string[];
+  setTimeSlots: (slots: string[]) => void;
   addPlayer: (
     player: Omit<
       Player,
@@ -86,6 +88,28 @@ export function TournamentProvider({
 
   const [playerLimit, setPlayerLimit] = useState<number>(5);
   const [numberOfCourts, setNumberOfCourts] = useState<number>(2);
+  const [timeSlots, setTimeSlots] = useState<string[]>([
+    '08:00',
+    '08:30',
+    '09:00',
+    '09:30',
+    '10:00',
+    '10:30',
+    '11:00',
+    '11:30',
+    '12:00',
+    '16:00',
+    '16:30',
+    '17:00',
+    '17:30',
+    '18:00',
+    '18:30',
+    '19:00',
+    '19:30',
+    '20:00',
+    '20:30',
+    '21:00',
+  ]);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -486,35 +510,17 @@ export function TournamentProvider({
     );
   })();
 
-  const assignMatchesToCourts = (matches: Match[], courts: number) => {
-    const timeSlots = [
-      '08:00',
-      '08:30',
-      '09:00',
-      '09:30',
-      '10:00',
-      '10:30',
-      '11:00',
-      '11:30',
-      '12:00',
-      '16:00',
-      '16:30',
-      '17:00',
-      '17:30',
-      '18:00',
-      '18:30',
-      '19:00',
-      '19:30',
-      '20:00',
-      '20:30',
-      '21:00',
-    ];
+  const assignMatchesToCourts = (
+    matches: Match[],
+    courts: number,
+    availableTimeSlots: string[] = timeSlots
+  ) => {
     const scheduledMatches: Match[] = [];
 
     const busyPlayers: { [timeSlot: string]: Set<string> } = {};
     const playerMatchCount: { [playerId: string]: number } = {};
 
-    timeSlots.forEach(slot => {
+    availableTimeSlots.forEach(slot => {
       busyPlayers[slot] = new Set<string>();
     });
 
@@ -538,7 +544,7 @@ export function TournamentProvider({
 
     const remainingMatches = [...matches];
 
-    for (const timeSlot of timeSlots) {
+    for (const timeSlot of availableTimeSlots) {
       let matchesInThisSlot = 0;
 
       while (matchesInThisSlot < courts && remainingMatches.length > 0) {
@@ -759,6 +765,8 @@ export function TournamentProvider({
         setPlayerLimit: updatePlayerLimitHandler,
         numberOfCourts,
         setNumberOfCourts: updateNumberOfCourtsHandler,
+        timeSlots,
+        setTimeSlots,
         addPlayer: addPlayerToTournament,
         updateMatch: updateMatchResult,
         resetTournament,

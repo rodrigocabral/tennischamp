@@ -1,12 +1,12 @@
 'use client';
 
-import CourtSettings from '@/components/CourtSettings';
 import MatchDraw from '@/components/MatchDraw';
 import PlayerRegistration from '@/components/PlayerRegistration';
 import ResetTournament from '@/components/ResetTournament';
 import ShareTournament from '@/components/ShareTournament';
 import TournamentBracket from '@/components/TournamentBracket';
 import { TournamentManager } from '@/components/TournamentManager';
+import TournamentSettings from '@/components/TournamentSettings';
 import TournamentTable from '@/components/TournamentTable';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useTournament } from '@/contexts/TournamentContext';
@@ -29,6 +29,7 @@ export default function Home() {
         </div>
         {tournamentId && (
           <div className="flex items-center gap-2">
+            <TournamentSettings />
             <ShareTournament />
             <ResetTournament />
           </div>
@@ -50,8 +51,6 @@ export default function Home() {
                 <PlayerRegistration />
               </CardContent>
             </Card>
-
-            <CourtSettings />
 
             <MatchDraw />
 
