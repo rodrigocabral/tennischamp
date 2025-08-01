@@ -58,7 +58,9 @@ interface TournamentContextType {
   startNextPhase: () => Promise<void>;
   canAdvancePhase: boolean;
   drawMatches: () => Promise<void>;
+  redrawMatches: () => Promise<void>;
   canDrawMatches: boolean;
+  canRedrawMatches: boolean;
   loading: boolean;
   error: string | null;
 }
@@ -474,6 +476,16 @@ export function TournamentProvider({
     );
   })();
 
+  const canRedrawMatches = (() => {
+    return (
+      tournament.matchesDrawn &&
+      tournament.phase === 'GROUP' &&
+      tournament.players.length >= 4 &&
+      numberOfCourts > 0 &&
+      !tournament.matches.some(match => match.completed)
+    );
+  })();
+
   const assignMatchesToCourts = (matches: Match[], courts: number) => {
     const timeSlots = [
       '08:00',
@@ -672,6 +684,42 @@ export function TournamentProvider({
     }
   }, [tournamentId, canDrawMatches, tournament.players, numberOfCourts]);
 
+  const redrawMatches = useCallback(async () => {
+    if (!tournamentId || !tournament.matchesDrawn) return;
+
+    try {
+      setError(null);
+      await deleteAllMatches(tournamentId);
+      const shuffledPlayers = [...tournament.players].sort(
+        () => Math.random() - 0.5
+      );
+      const matches = generateInitialMatches(shuffledPlayers);
+      const matchesWithSchedule = assignMatchesToCourts(
+        matches,
+        numberOfCourts
+      );
+
+      for (const match of matchesWithSchedule) {
+        await addMatch(tournamentId, match);
+      }
+
+      await updateTournament(tournamentId, {
+        numberOfCourts,
+        matchesDrawn: true,
+      });
+    } catch (error) {
+      console.error('Erro ao redesenhar partidas:', error);
+      setError(
+        error instanceof Error ? error.message : 'Erro ao redesenhar partidas'
+      );
+    }
+  }, [
+    tournamentId,
+    tournament.matchesDrawn,
+    tournament.players,
+    numberOfCourts,
+  ]);
+
   const updatePlayerLimitHandler = useCallback(
     async (limit: number) => {
       if (!tournamentId) return;
@@ -718,7 +766,9 @@ export function TournamentProvider({
         startNextPhase,
         canAdvancePhase,
         drawMatches,
+        redrawMatches,
         canDrawMatches,
+        canRedrawMatches,
         loading,
         error,
       }}

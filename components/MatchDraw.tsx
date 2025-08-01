@@ -7,18 +7,27 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { useTournament } from '@/contexts/TournamentContext';
-import { AlertTriangle, CheckCircle, Loader2, Shuffle } from 'lucide-react';
+import {
+  AlertTriangle,
+  CheckCircle,
+  Loader2,
+  RotateCcw,
+  Shuffle,
+} from 'lucide-react';
 import { useState } from 'react';
 
 export default function MatchDraw() {
   const {
     canDrawMatches,
     drawMatches,
+    redrawMatches,
+    canRedrawMatches,
     tournament,
     playerLimit,
     numberOfCourts,
   } = useTournament();
   const [isDrawing, setIsDrawing] = useState(false);
+  const [isRedrawing, setIsRedrawing] = useState(false);
   // Função para validar se há conflitos no sorteio
   const validateSchedule = () => {
     const conflicts: string[] = [];
@@ -249,6 +258,38 @@ export default function MatchDraw() {
               </div>
             </div>
           </div>
+
+          {/* Botão de Refazer Sorteio */}
+          {canRedrawMatches && (
+            <div className="space-y-3 pt-2 border-t border-gray-200">
+              <div className="text-xs text-amber-600 bg-amber-50 p-3 rounded">
+                <p className="font-medium">🔄 Refazer Sorteio Disponível</p>
+                <p>
+                  Você pode refazer o sorteio enquanto nenhuma partida foi
+                  jogada. Isso gerará uma nova distribuição aleatória.
+                </p>
+              </div>
+
+              <Button
+                onClick={async () => {
+                  setIsRedrawing(true);
+                  await redrawMatches();
+                  setIsRedrawing(false);
+                }}
+                disabled={isRedrawing}
+                variant="outline"
+                className="w-full"
+                size="lg"
+              >
+                {isRedrawing ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <RotateCcw className="h-4 w-4 mr-2" />
+                )}
+                {isRedrawing ? 'Refazendo...' : 'Refazer Sorteio'}
+              </Button>
+            </div>
+          )}
         </CardContent>
       </Card>
     );
@@ -321,7 +362,7 @@ export default function MatchDraw() {
           size="lg"
         >
           {isDrawing ? (
-            <Loader2 className="h-4 w-4 mr-2" />
+            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
           ) : (
             <Shuffle className="h-4 w-4 mr-2" />
           )}
