@@ -20,7 +20,9 @@ import {
 } from '@/components/ui/table';
 import { useTournament } from '@/contexts/TournamentContext';
 import { getPlayerRanking } from '@/lib/tournament';
+import { Copy } from 'lucide-react';
 import { useState } from 'react';
+import { toast } from 'sonner';
 
 export default function TournamentTable() {
   const { tournament, updateMatch, startNextPhase, canAdvancePhase } =
@@ -35,6 +37,58 @@ export default function TournamentTable() {
   const getPlayerName = (playerId: string) => {
     const player = tournament.players.find(p => p.id === playerId);
     return player ? player.name : 'Unknown';
+  };
+
+  const formatMatchesForClipboard = () => {
+    const matchesByTimeSlot = tournament.matches.reduce(
+      (acc, match) => {
+        const timeSlot = match.timeSlot || 'Sem horário';
+        if (!acc[timeSlot]) acc[timeSlot] = [];
+        acc[timeSlot].push(match);
+        return acc;
+      },
+      {} as Record<string, typeof tournament.matches>
+    );
+
+    let formattedText = '🎾 LISTA DE PARTIDAS\n\n';
+
+    Object.entries(matchesByTimeSlot)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .forEach(([timeSlot, matches]) => {
+        formattedText += `⏰ ${timeSlot}\n`;
+        formattedText += '─'.repeat(30) + '\n';
+
+        matches
+          .sort((a, b) => (a.courtNumber || 0) - (b.courtNumber || 0))
+          .forEach(match => {
+            const player1 = getPlayerName(match.player1Id);
+            const player2 = getPlayerName(match.player2Id);
+            const court = match.courtNumber
+              ? `Quadra ${match.courtNumber}`
+              : 'Sem quadra';
+
+            if (match.completed) {
+              formattedText += `${court}: ${player1} ${match.player1Games} x ${match.player2Games} ${player2} ✅\n`;
+            } else {
+              formattedText += `${court}: ${player1} vs ${player2}\n`;
+            }
+          });
+
+        formattedText += '\n';
+      });
+
+    return formattedText;
+  };
+
+  const copyMatchesToClipboard = async () => {
+    try {
+      const formattedMatches = formatMatchesForClipboard();
+      await navigator.clipboard.writeText(formattedMatches);
+      toast.success('Lista de partidas copiada para a área de transferência!');
+    } catch (error) {
+      toast.error('Erro ao copiar lista de partidas');
+      console.error('Error copying to clipboard:', error);
+    }
   };
 
   const handleScoreSubmit = (e: React.FormEvent) => {
@@ -111,9 +165,20 @@ export default function TournamentTable() {
             <h3 className="text-base sm:text-lg font-medium">
               Partidas da Fase de Grupos
             </h3>
-            {canAdvancePhase && (
-              <Button onClick={startNextPhase}>Iniciar Finais</Button>
-            )}
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={copyMatchesToClipboard}
+                className="flex items-center gap-2"
+              >
+                <Copy className="h-4 w-4" />
+                Copiar Lista
+              </Button>
+              {canAdvancePhase && (
+                <Button onClick={startNextPhase}>Iniciar Finais</Button>
+              )}
+            </div>
           </div>
           <div className="grid gap-3">
             {
