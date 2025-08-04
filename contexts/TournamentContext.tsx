@@ -55,6 +55,7 @@ interface TournamentContextType {
     player1Games: number,
     player2Games: number
   ) => Promise<void>;
+  updateMatchesOrder: (matches: Match[]) => Promise<void>;
   resetTournament: () => Promise<void>;
   createNewTournament: () => Promise<void>;
   startNextPhase: () => Promise<void>;
@@ -406,8 +407,35 @@ export function TournamentProvider({
         );
         throw error;
       }
+    }, []);
+  
+  // Function to update match order in Firestore
+  const updateMatchesOrder = useCallback(
+    async (matches: Match[]) => {
+      if (!tournamentId) return;
+      
+      try {
+        setError(null);
+        setLoading(true);
+        
+        // Update each match in Firestore
+        for (const match of matches) {
+          await updateMatchInFirestore(match.id, {
+            courtNumber: match.courtNumber,
+            timeSlot: match.timeSlot,
+          });
+        }
+      } catch (error) {
+        console.error('Erro ao atualizar ordem das partidas:', error);
+        setError(
+          error instanceof Error ? error.message : 'Erro ao atualizar ordem das partidas'
+        );
+        throw error;
+      } finally {
+        setLoading(false);
+      }
     },
-    []
+    [tournamentId]
   );
 
   const resetTournament = useCallback(async () => {
@@ -769,6 +797,7 @@ export function TournamentProvider({
         setTimeSlots,
         addPlayer: addPlayerToTournament,
         updateMatch: updateMatchResult,
+        updateMatchesOrder,
         resetTournament,
         createNewTournament,
         startNextPhase,
