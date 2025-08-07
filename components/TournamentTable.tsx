@@ -22,7 +22,7 @@ import { useTournament } from '@/contexts/TournamentContext';
 import { getPlayerRanking } from '@/lib/tournament';
 import { Match } from '@/types';
 import { Copy } from 'lucide-react';
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { DndProvider, useDrag, useDrop } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { toast } from 'sonner';
@@ -38,8 +38,13 @@ interface DragItem {
 }
 
 export default function TournamentTable() {
-  const { tournament, updateMatch, updateMatchesOrder, startNextPhase, canAdvancePhase } =
-    useTournament();
+  const {
+    tournament,
+    updateMatch,
+    updateMatchesOrder,
+    startNextPhase,
+    canAdvancePhase,
+  } = useTournament();
   const [selectedMatch, setSelectedMatch] = useState<string | null>(null);
   const [scores, setScores] = useState({ player1: 0, player2: 0 });
 
@@ -112,10 +117,16 @@ export default function TournamentTable() {
       setScores({ player1: 0, player2: 0 });
     }
   };
-  
-  // Function to handle match reordering
+
+  // Function to handle match swapping
   const moveMatch = useCallback(
-    (dragTimeSlot: string, dragIndex: number, hoverTimeSlot: string, hoverIndex: number, updateFirestore: boolean = false) => {
+    (
+      dragTimeSlot: string,
+      dragIndex: number,
+      hoverTimeSlot: string,
+      hoverIndex: number,
+      updateFirestore: boolean = false
+    ) => {
       // Find the matches by time slot
       const matchesByTimeSlot = tournament.matches.reduce(
         (acc, match) => {
@@ -126,72 +137,65 @@ export default function TournamentTable() {
         },
         {} as Record<string, typeof tournament.matches>
       );
-      
+
       // Get the matches for the drag and hover time slots
       const dragMatches = [...(matchesByTimeSlot[dragTimeSlot] || [])];
       const hoverMatches = [...(matchesByTimeSlot[hoverTimeSlot] || [])];
-      
+
+      // Get the matches being swapped
+      const dragMatch = { ...dragMatches[dragIndex] };
+      const hoverMatch = { ...hoverMatches[hoverIndex] };
+
       // If dragging within the same time slot
       if (dragTimeSlot === hoverTimeSlot) {
-        // Get the match being dragged
-        const dragMatch = {...dragMatches[dragIndex]};
-        
-        // Remove the match from its original position
-        dragMatches.splice(dragIndex, 1);
-        
-        // Insert the match at the new position
-        dragMatches.splice(hoverIndex, 0, dragMatch);
-        
-        // Update court numbers for all matches in this time slot
-        dragMatches.forEach((match, index) => {
-          match.courtNumber = index + 1;
-        });
-        
-        // Update the matchesByTimeSlot with the reordered matches
+        // Simple swap within the same time slot
+        dragMatches[dragIndex] = {
+          ...hoverMatch,
+          courtNumber: dragMatch.courtNumber, // Keep original court number
+        };
+        dragMatches[hoverIndex] = {
+          ...dragMatch,
+          courtNumber: hoverMatch.courtNumber, // Keep original court number
+        };
+
+        // Update the matchesByTimeSlot with the swapped matches
         matchesByTimeSlot[dragTimeSlot] = dragMatches;
       } else {
-        // Get the match being dragged
-        const dragMatch = {...dragMatches[dragIndex]};
-        
-        // Remove the match from its original position
-        dragMatches.splice(dragIndex, 1);
-        
-        // Create a copy of the match with the new time slot
+        // Swap between different time slots
         const updatedDragMatch = {
           ...dragMatch,
           timeSlot: hoverTimeSlot,
+          courtNumber: hoverMatch.courtNumber, // Take the hover match's court number
         };
-        
-        // Insert the match at the new position in the hover time slot
-        hoverMatches.splice(hoverIndex, 0, updatedDragMatch);
-        
-        // Update court numbers for all matches in both time slots
-        dragMatches.forEach((match, index) => {
-          match.courtNumber = index + 1;
-        });
-        
-        hoverMatches.forEach((match, index) => {
-          match.courtNumber = index + 1;
-        });
-        
-        // Update the matchesByTimeSlot with the reordered matches
+
+        const updatedHoverMatch = {
+          ...hoverMatch,
+          timeSlot: dragTimeSlot,
+          courtNumber: dragMatch.courtNumber, // Take the drag match's court number
+        };
+
+        // Replace the matches in their new positions
+        dragMatches[dragIndex] = updatedHoverMatch;
+        hoverMatches[hoverIndex] = updatedDragMatch;
+
+        // Update the matchesByTimeSlot with the swapped matches
         matchesByTimeSlot[dragTimeSlot] = dragMatches;
         matchesByTimeSlot[hoverTimeSlot] = hoverMatches;
       }
-      
+
       // Flatten the matchesByTimeSlot back to an array
       const newMatches = Object.values(matchesByTimeSlot).flat();
-      
+
       // Only update Firestore if updateFirestore is true
       if (updateFirestore) {
         updateMatchesOrder(newMatches)
-        .then(() => {
-          toast.success('Ordem das partidas atualizada com sucesso!');
-        })
-        .catch(error => {
-          toast.error('Erro ao atualizar ordem das partidas');
-          console.error('Error updating match order:', error);
-        });
+          .then(() => {
+            toast.success('Partidas trocadas com sucesso!');
+          })
+          .catch(error => {
+            toast.error('Erro ao trocar partidas');
+            console.error('Error swapping matches:', error);
+          });
       }
     },
     [tournament, updateMatchesOrder]
@@ -342,9 +346,17 @@ interface MatchCardProps {
   selectedMatch: string | null;
   setSelectedMatch: (matchId: string | null) => void;
   scores: { player1: number; player2: number };
-  setScores: React.Dispatch<React.SetStateAction<{ player1: number; player2: number }>>;
+  setScores: React.Dispatch<
+    React.SetStateAction<{ player1: number; player2: number }>
+  >;
   handleScoreSubmit: (e: React.FormEvent) => void;
-  moveMatch: (dragTimeSlot: string, dragIndex: number, hoverTimeSlot: string, hoverIndex: number, updateFirestore?: boolean) => void;
+  moveMatch: (
+    dragTimeSlot: string,
+    dragIndex: number,
+    hoverTimeSlot: string,
+    hoverIndex: number,
+    updateFirestore?: boolean
+  ) => void;
 }
 
 function MatchCard({
@@ -359,58 +371,81 @@ function MatchCard({
   handleScoreSubmit,
   moveMatch,
 }: MatchCardProps) {
-  // Reference to the card element
-  const ref = useCallback((node: HTMLDivElement | null) => {
-    dropRef(dragRef(node));
-  }, []);
-
   // Set up drag source
   const [{ isDragging }, dragRef] = useDrag({
     type: MATCH_ITEM_TYPE,
-    item: { id: match.id, timeSlot, index: matchIndex } as DragItem,
-    collect: (monitor) => ({
+    item: () =>
+      ({
+        id: match.id,
+        timeSlot,
+        index: matchIndex,
+        originalTimeSlot: timeSlot,
+        originalIndex: matchIndex,
+      }) as DragItem & { originalTimeSlot: string; originalIndex: number },
+    collect: monitor => ({
       isDragging: monitor.isDragging(),
     }),
-    // Only update Firestore after the drop is completed
-    end: (item, monitor) => {
-      // If the drop was successful and the item was moved
-      if (monitor.didDrop() && 
-          (item.index !== matchIndex || item.timeSlot !== timeSlot)) {
-        // Call moveMatch to update Firestore
-        moveMatch(timeSlot, matchIndex, item.timeSlot, item.index, true);
-      }
-    },
   });
 
+  // Reference to the card element
+  const ref = useRef<HTMLDivElement>(null);
+
   // Set up drop target
-  const [, dropRef] = useDrop({
+  const [{ isOver }, dropRef] = useDrop({
     accept: MATCH_ITEM_TYPE,
-    hover: (item: DragItem) => {
-      if (!ref) return;
-      
+    collect: monitor => ({
+      isOver: monitor.isOver(),
+    }),
+    hover: (
+      item: DragItem & { originalTimeSlot?: string; originalIndex?: number }
+    ) => {
+      if (!ref.current) return;
+
       const dragIndex = item.index;
       const hoverIndex = matchIndex;
       const dragTimeSlot = item.timeSlot;
       const hoverTimeSlot = timeSlot;
-      
+
       // Don't replace items with themselves
       if (dragIndex === hoverIndex && dragTimeSlot === hoverTimeSlot) {
         return;
       }
-      
-      // Call the moveMatch function to handle the reordering, but don't update Firestore yet
-      moveMatch(dragTimeSlot, dragIndex, hoverTimeSlot, hoverIndex, false);
-      
-      // Update the item's index and time slot for the next hover
-      item.index = hoverIndex;
-      item.timeSlot = hoverTimeSlot;
+
+      // For swapping, we only want to show preview during hover
+      // The actual swap will happen on drop via the end callback
+      // No need to call moveMatch here for preview
+    },
+    drop: (
+      item: DragItem & { originalTimeSlot?: string; originalIndex?: number }
+    ) => {
+      const dragIndex = item.originalIndex || item.index;
+      const hoverIndex = matchIndex;
+      const dragTimeSlot = item.originalTimeSlot || item.timeSlot;
+      const hoverTimeSlot = timeSlot;
+
+      // Don't swap items with themselves
+      if (dragIndex === hoverIndex && dragTimeSlot === hoverTimeSlot) {
+        return;
+      }
+
+      // Perform the actual swap
+      moveMatch(dragTimeSlot, dragIndex, hoverTimeSlot, hoverIndex, true);
     },
   });
+
+  // Combine drag and drop refs
+  dragRef(dropRef(ref));
 
   return (
     <div
       ref={ref}
-      className={`flex flex-col sm:flex-row sm:items-center justify-between p-3 sm:p-4 border rounded-lg gap-3 sm:gap-4 ${isDragging ? 'opacity-50 cursor-move' : 'cursor-move'}`}
+      className={`flex flex-col sm:flex-row sm:items-center justify-between p-3 sm:p-4 border rounded-lg gap-3 sm:gap-4 transition-all duration-200 ${
+        isDragging
+          ? 'opacity-50 cursor-move transform scale-105'
+          : isOver
+            ? 'border-blue-400 bg-blue-50 shadow-md cursor-move'
+            : 'cursor-move hover:bg-gray-50'
+      }`}
     >
       <div className="flex items-center gap-3 sm:gap-4 text-sm sm:text-base">
         <div className="flex items-center gap-2">
@@ -499,5 +534,4 @@ function MatchCard({
       )}
     </div>
   );
-
 }
