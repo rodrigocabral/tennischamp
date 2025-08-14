@@ -8,9 +8,12 @@ import TournamentBracket from '@/components/TournamentBracket';
 import { TournamentManager } from '@/components/TournamentManager';
 import TournamentSettings from '@/components/TournamentSettings';
 import TournamentTable from '@/components/TournamentTable';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useTournament } from '@/contexts/TournamentContext';
+import { Calendar } from 'lucide-react';
 import Image from 'next/image';
+import Link from 'next/link';
 
 export default function Home() {
   const { tournament, tournamentId } = useTournament();
@@ -34,6 +37,19 @@ export default function Home() {
             <ResetTournament />
           </div>
         )}
+      </div>
+
+      {/* Link para o Cronograma */}
+      <div className="mb-4 sm:mb-6">
+        <Link href="/schedule">
+          <Button
+            variant="outline"
+            className="w-full sm:w-auto flex items-center gap-2"
+          >
+            <Calendar className="w-4 h-4" />
+            📅 Ver Cronograma Oficial
+          </Button>
+        </Link>
       </div>
 
       <div className="grid gap-4 sm:gap-8">
