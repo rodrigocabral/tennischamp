@@ -163,7 +163,7 @@ function ScheduleContent() {
                 </thead>
                 <tbody>
                   <tr className="border-b">
-                    <td className="p-3 font-medium">06h30 – 07h50</td>
+                    <td className="p-3 font-medium">07h30 – 07h50</td>
                     <td className="p-3">
                       Chegada de todos os jogadores, fotos, alongamento,
                       aquecimento livre nas quadras
