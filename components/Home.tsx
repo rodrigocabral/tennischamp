@@ -28,7 +28,12 @@ export default function Home() {
             height={60}
             className="sm:w-[70px] sm:h-[100px]"
           />
-          <h1 className="text-2xl sm:text-4xl font-bold">Presença Open</h1>
+          <div className="flex flex-col items-start gap-1">
+            <h1 className="text-2xl sm:text-4xl font-bold">Presença Open</h1>
+            <span className="text-xs">
+              #{tournamentId}
+            </span>
+          </div>
         </div>
         {tournamentId && (
           <div className="flex items-center gap-2">
