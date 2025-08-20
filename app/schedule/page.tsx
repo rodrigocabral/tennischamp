@@ -419,12 +419,12 @@ function ScheduleContent() {
                 <p className="text-sm">
                   <strong>Link oficial:</strong>{' '}
                   <a
-                    href="https://tennischamp.vercel.app?tournament=hklWRkxN2LfUvT2a0NDb"
+                    href="https://tennischamp.vercel.app?tournament=gUu4AG3xAwBB8nRysclb"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-purple-600 dark:text-purple-400 hover:underline font-medium"
                   >
-                    https://tennischamp.vercel.app?tournament=hklWRkxN2LfUvT2a0NDb
+                    https://tennischamp.vercel.app?tournament=gUu4AG3xAwBB8nRysclb
                   </a>
                 </p>
               </div>
